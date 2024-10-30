@@ -1,50 +1,35 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import './App.css';
 import InputField from './components/InputField';
 import TodoList from './components/TodoList';
+import { addNewTodo, fetchTodos } from './store/todoSlice';
 
 function App() {
-	const [todos, setTodos] = useState([]);
 	const [text, setText] = useState('');
+	const { status, error } = useSelector(state => state.todos);
+	const dispatch = useDispatch();
 
-	const addTodo = () => {
+	const handleAction = () => {
 		if (text.trim().length) {
-			setTodos([
-				...todos,
-				{
-					id: new Date().toISOString(),
-					text,
-					completed: false,
-				},
-			]);
+			dispatch(addNewTodo(text));
+			setText('');
 		}
 	};
 
-	const removeTodo = todoId => {
-		setTodos(todos.filter(todo => todo.id !== todoId));
-	};
-
-	const toggleTodoComplete = todoId => {
-		setTodos(
-			todos.map(todo => {
-				if (todo.id !== todoId) return todo;
-
-				return {
-					...todo,
-					completed: !todo.completed,
-				};
-			})
-		);
-	};
-
+	useEffect(() => {
+		dispatch(fetchTodos());
+	}, [dispatch]);
 	return (
 		<div className='App'>
-			<InputField text={text} handleInput={setText} handleSubmit={addTodo} />
-			<TodoList
-				todos={todos}
-				removeTodo={removeTodo}
-				toggleTodoComplete={toggleTodoComplete}
+			<InputField
+				text={text}
+				handleInput={setText}
+				handleSubmit={handleAction}
 			/>
+			{status === 'loading' && <h2>Loading...</h2>}
+			{error && <h2>An error occured: {error}</h2>}
+			<TodoList />
 		</div>
 	);
 }
